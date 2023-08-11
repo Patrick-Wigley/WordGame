@@ -34,8 +34,9 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for i := 1; i < WORDS_LETTERS_COUNT; i++ {
-		vector.DrawFilledRect(screen, float32(i)*CELL_SIZE+200, 50, CELL_SIZE, CELL_SIZE, color.RGBA{uint8(50 * i), 255, 255, 255}, false)
+	// Draw each cell
+	for i := 0; i < WORDS_LETTERS_COUNT; i++ {
+		vector.DrawFilledRect(screen, float32(i)*125+250, 50, CELL_SIZE, CELL_SIZE, color.RGBA{uint8(50 * i), 255, 255, 255}, false)
 	}
 
 }
@@ -46,7 +47,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func main() {
 	ebiten.SetWindowSize(width, height)
-	ebiten.SetWindowTitle("Hello, World!")
+	ebiten.SetWindowTitle("Word Game")
 	if err := ebiten.RunGame(&Game{}); err != nil {
 		log.Fatal(err)
 	}
