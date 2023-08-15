@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"log"
+	"strings"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
@@ -16,6 +17,7 @@ import (
 const WORDS_LETTERS_COUNT = 5
 const CELL_SIZE = 100
 const TRIES = 6
+const WORD_TO_GUESS = "hello"
 
 type Game struct {
 	keys []ebiten.Key
@@ -26,6 +28,7 @@ type Cell struct {
 	position     int32
 	string_typed string
 	is_empty     bool
+	colour       color.Color
 }
 type Word struct {
 	cells        [WORDS_LETTERS_COUNT]Cell
@@ -41,8 +44,9 @@ var (
 	attempt_index  = 0
 	typed_word_str = ""
 	font_face      font.Face
+	word_found     = false
 )
- 
+
 func init() {
 	tt, err := opentype.Parse(fonts.MPlus1pRegular_ttf)
 	if err != nil {
@@ -53,6 +57,15 @@ func init() {
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
+
+	// Initialise cells
+	for rowIndex := 0; rowIndex < len(cells); rowIndex++ {
+		for cellIndex := 0; cellIndex < WORDS_LETTERS_COUNT; cellIndex++ {
+			// Cell Colour
+			cells[rowIndex].cells[cellIndex].colour = color.RGBA{255, 255, 255, 255}
+
+		}
+	}
 }
 
 func (g *Game) Update() error {
@@ -77,32 +90,58 @@ func (g *Game) Update() error {
 	}
 	if len(typed_word_str) == 5 && inpututil.IsKeyJustReleased(ebiten.KeyEnter) {
 		// User submits attempt
-		cells[attempt_index].saved_word = typed_word_str
-		cells[attempt_index].is_filled_in = true
-		typed_word_str = ""
-		attempt_index++
+		if typed_word_str == WORD_TO_GUESS {
+			// User found word
+			word_found = true
+		} else {
+
+			println(typed_word_str)
+			println(WORD_TO_GUESS)
+			for i := 0; i < len(typed_word_str); i++ {
+				var char = string(typed_word_str[i])
+				if strings.Contains(WORD_TO_GUESS, char) {
+					// Character found but NOT in correct place
+					cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+				}
+				if string(WORD_TO_GUESS[i]) == char {
+					// Character found in correct
+					cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
+				}
+			}
+
+			cells[attempt_index].saved_word = typed_word_str
+			cells[attempt_index].is_filled_in = true
+			typed_word_str = ""
+			attempt_index++
+		}
 	}
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// Draw each cell
-	for row_index := 0; row_index < len(cells); row_index++ {
-		var current_row = &cells[row_index]
-		for i := 0; i < WORDS_LETTERS_COUNT; i++ {
-			var x float32 = float32(i)*125 + 250
-			var y float32 = float32(row_index) * (CELL_SIZE + 50)
 
-			vector.DrawFilledRect(screen, x, y, CELL_SIZE, CELL_SIZE, color.RGBA{uint8(50 * i), 255, 255, 255}, false)
-			if attempt_index == row_index {
-				if i < len(typed_word_str) { // continue here
-					text.Draw(screen, string(typed_word_str[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
+	if !word_found {
+		// Draw each cell
+		for rowIndex := 0; rowIndex < len(cells); rowIndex++ {
+			var currentRow = &cells[rowIndex]
+			for i := 0; i < WORDS_LETTERS_COUNT; i++ {
+				var x float32 = float32(i)*125 + 250
+				var y float32 = float32(rowIndex) * (CELL_SIZE + 50)
+				var currentCell = cells[rowIndex].cells[i]
+
+				vector.DrawFilledRect(screen, x, y, CELL_SIZE, CELL_SIZE, currentCell.colour, false)
+				if attempt_index == rowIndex {
+					if i < len(typed_word_str) { // continue here
+						text.Draw(screen, string(typed_word_str[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
+					}
+				} else if currentRow.is_filled_in {
+					text.Draw(screen, string(currentRow.saved_word[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
 				}
-			} else if current_row.is_filled_in {
-				text.Draw(screen, string(current_row.saved_word[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
 			}
 		}
+	} else {
+		text.Draw(screen, "You Win, The word was "+WORD_TO_GUESS, font_face, (width/2)-140, (height/2)-10, color.RGBA{255, 0, 0, 255})
 	}
 }
 
