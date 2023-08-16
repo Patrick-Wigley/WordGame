@@ -31,6 +31,7 @@ type Cell struct {
 	string_typed string
 	is_empty     bool
 	colour       color.Color
+	isFound      bool
 }
 type Word struct {
 	cells        [WORDS_LETTERS_COUNT]Cell
@@ -98,8 +99,9 @@ func (g *Game) Update() error {
 		} else {
 
 			//var characters_found_maxed = ""
-			var missing_characters = ""
+			var missing_characters = WORD_TO_GUESS
 
+			println(attempt_index)
 			for i := 0; i < len(WORD_TO_GUESS); i++ {
 				var char = string(WORD_TO_GUESS[i])
 				var char_in_typed_word = string(typed_word_str[i])
@@ -108,26 +110,40 @@ func (g *Game) Update() error {
 					// Player found letter in correct place
 					//characters_to_processed += strings.ToUpper(char)
 					cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
-					missing_characters += "|"
-				} else {
-					missing_characters += char
-				}
 
-			}
-			println(missing_characters)
-
-			for i := 0; i < len(typed_word_str); i++ {
-				var char = string(typed_word_str[i])
-				if strings.Contains(missing_characters, char) {
-					// If char in missing characters
-					var characters_first_instance = strings.Index(missing_characters, char)
-					cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
-
-					missing_characters = missing_characters[:characters_first_instance] + "|" + missing_characters[characters_first_instance+1:]
+					//var characters_first_instance = strings.Index(missing_characters, char)
+					missing_characters = missing_characters[:i] + "|" + missing_characters[i+1:]
 					println(missing_characters)
 				}
 
 			}
+			for i := 0; i < len(missing_characters); i++ {
+				var char = string(missing_characters[i])
+				var char_in_typed_word = string(typed_word_str[i])
+
+				if char != "|" {
+					if strings.Contains(missing_characters, char_in_typed_word) {
+						cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+						var charactersFirstInstance = strings.Index(missing_characters, char)
+						missing_characters = missing_characters[:charactersFirstInstance] + "|" + missing_characters[charactersFirstInstance+1:]
+					}
+				}
+			}
+
+			// for i := 0; i < len(typed_word_str); i++ {
+			// 	var char = string(typed_word_str[i])
+			// 	if strings.Contains(missing_characters, char) {
+			// 		// If char in missing characters
+			// 		if !(cells[attempt_index].cells[i].isFound) {
+			// 			cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+			// 		}
+
+			// 		var characters_first_instance = strings.Index(missing_characters, char)
+			// 		missing_characters = missing_characters[:characters_first_instance] + "|" + missing_characters[characters_first_instance+1:]
+			// 		println(missing_characters)
+			// 	}
+
+			// }
 
 			// else if strings.Contains(WORD_TO_GUESS, char_in_typed_word) {
 			// 	// This char is in the word, not in this current location
