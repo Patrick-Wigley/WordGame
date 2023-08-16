@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	//"unicode"
+
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -95,19 +97,82 @@ func (g *Game) Update() error {
 			word_found = true
 		} else {
 
-			println(typed_word_str)
-			println(WORD_TO_GUESS)
+			//var characters_found_maxed = ""
+			var missing_characters = ""
+
+			for i := 0; i < len(WORD_TO_GUESS); i++ {
+				var char = string(WORD_TO_GUESS[i])
+				var char_in_typed_word = string(typed_word_str[i])
+
+				if char == char_in_typed_word {
+					// Player found letter in correct place
+					//characters_to_processed += strings.ToUpper(char)
+					cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
+					missing_characters += "|"
+				} else {
+					missing_characters += char
+				}
+
+			}
+			println(missing_characters)
+
 			for i := 0; i < len(typed_word_str); i++ {
 				var char = string(typed_word_str[i])
-				if strings.Contains(WORD_TO_GUESS, char) {
-					// Character found but NOT in correct place
+				if strings.Contains(missing_characters, char) {
+					// If char in missing characters
+					var characters_first_instance = strings.Index(missing_characters, char)
 					cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+
+					missing_characters = missing_characters[:characters_first_instance] + "|" + missing_characters[characters_first_instance+1:]
+					println(missing_characters)
 				}
-				if string(WORD_TO_GUESS[i]) == char {
-					// Character found in correct
-					cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
-				}
+
 			}
+
+			// else if strings.Contains(WORD_TO_GUESS, char_in_typed_word) {
+			// 	// This char is in the word, not in this current location
+			// 	if !(strings.Contains(characters_to_processed, char_in_typed_word)) {
+			// 		// Add character to be processed
+			// 		characters_to_processed += char_in_typed_word
+			// 	}
+			// }
+
+			//
+
+			// for i := 0; i < len(typed_word_str); i++ {
+			// 	var char = string(typed_word_str[i])
+			// 	if strings.Contains(WORD_TO_GUESS, char) {
+			// 		var occurances_in_typed_word = strings.Count(typed_word_str, char)
+			// 		var occurances_count = strings.Count(WORD_TO_GUESS, char)
+
+			// 		if occurances_in_typed_word > occurances_count {
+			// 			// used char more times than needed
+
+			// 			for char_occurance := 0; char_occurance < occurances_count; char_occurance++ {
+
+			// 			}
+
+			// 		}
+
+			// 		// Character found but NOT in correct place
+			// 		if strings.Count(characters_processed, char) >= strings.Count(WORD_TO_GUESS, char) {
+			// 			//ignore
+			// 			println("Used letter more times than is in string")
+			// 		} else {
+			// 			cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+			// 			println("Found letter but not in correct place")
+			// 		}
+			// 		if string(WORD_TO_GUESS[i]) == char {
+			// 			// Character found in correct
+			// 			cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
+			// 			println("Found letter in exact place")
+			// 		}
+
+			// 		// if strings.Count(typed_word_str, char) > strings.Count(WORD_TO_GUESS, char) {
+			// 		// 	// Ignore
+			// 	}
+			// 	characters_processed += char
+			// }
 
 			cells[attempt_index].saved_word = typed_word_str
 			cells[attempt_index].is_filled_in = true
