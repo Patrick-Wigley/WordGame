@@ -3,10 +3,10 @@ package main
 import (
 	"image/color"
 	"log"
+	"os"
 	"strings"
 
-	//"unicode"
-
+	// Ebiten
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -14,6 +14,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
+
+	// Dataframes
+	"github.com/go-gota/gota/dataframe"
+	"github.com/go-gota/gota/series"
 )
 
 const WORDS_LETTERS_COUNT = 5
@@ -48,6 +52,7 @@ var (
 	typed_word_str = ""
 	font_face      font.Face
 	word_found     = false
+	wordsDataFrame = dataframe.DataFrame{}
 )
 
 func init() {
@@ -60,6 +65,13 @@ func init() {
 		DPI:     72,
 		Hinting: font.HintingFull,
 	})
+	wordsFile, err := os.Open("words.csv")
+	if err != nil {
+		println("ERROR: ", err)
+	}
+	defer wordsFile.Close()
+	wordsDataFrame = dataframe.ReadCSV(wordsFile)
+	//fmt.Println(wordsDataFrame)
 
 	// Initialise cells
 	for rowIndex := 0; rowIndex < len(cells); rowIndex++ {
@@ -69,6 +81,7 @@ func init() {
 
 		}
 	}
+
 }
 
 func (g *Game) Update() error {
@@ -97,37 +110,45 @@ func (g *Game) Update() error {
 			// User found word
 			word_found = true
 		} else {
-			var missingCharacters = WORD_TO_GUESS
+			// check if word submitted is actually a word
+			var filteredMatches = wordsDataFrame.Filter(dataframe.F{Colname: "WORDS", Comparator: series.In, Comparando: strings.ToLower(typed_word_str)})
 
-			for i := 0; i < len(WORD_TO_GUESS); i++ {
-				var char = string(WORD_TO_GUESS[i])
-				var charInTypedWord = string(typed_word_str[i])
+			if filteredMatches.Col("WORDS").Len() != 0 {
+				var missingCharacters = WORD_TO_GUESS
 
-				if char == charInTypedWord {
-					// Player found letter in correct place
-					cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
-					missingCharacters = missingCharacters[:i] + "|" + missingCharacters[i+1:]
+				for i := 0; i < len(WORD_TO_GUESS); i++ {
+					var char = string(WORD_TO_GUESS[i])
+					var charInTypedWord = string(typed_word_str[i])
+
+					if char == charInTypedWord {
+						// Player found letter in correct place
+						cells[attempt_index].cells[i].colour = color.RGBA{0, 255, 0, 255}
+						missingCharacters = missingCharacters[:i] + "|" + missingCharacters[i+1:]
+					}
+
 				}
+				for i := 0; i < len(missingCharacters); i++ {
+					var char = string(missingCharacters[i])
+					var charInTypedWord = string(typed_word_str[i])
 
-			}
-			for i := 0; i < len(missingCharacters); i++ {
-				var char = string(missingCharacters[i])
-				var charInTypedWord = string(typed_word_str[i])
-
-				if char != "|" {
-					if strings.Contains(missingCharacters, charInTypedWord) {
-						// Player found letter NOT in correct place
-						cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
-						var charactersFirstInstance = strings.Index(missingCharacters, char)
-						missingCharacters = missingCharacters[:charactersFirstInstance] + "|" + missingCharacters[charactersFirstInstance+1:]
+					if char != "|" {
+						if strings.Contains(missingCharacters, charInTypedWord) {
+							// Player found letter NOT in correct place
+							cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
+							var charactersFirstInstance = strings.Index(missingCharacters, char)
+							missingCharacters = missingCharacters[:charactersFirstInstance] + "|" + missingCharacters[charactersFirstInstance+1:]
+						}
 					}
 				}
+
+				cells[attempt_index].saved_word = typed_word_str
+				cells[attempt_index].is_filled_in = true
+				typed_word_str = ""
+				attempt_index++
+			} else {
+				println("Not a word")
 			}
 
-			cells[attempt_index].saved_word = typed_word_str
-			cells[attempt_index].is_filled_in = true
-			typed_word_str = ""
-			attempt_index++
 		}
 	}
 
@@ -148,10 +169,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				vector.DrawFilledRect(screen, x, y, CELL_SIZE, CELL_SIZE, currentCell.colour, false)
 				if attempt_index == rowIndex {
 					if i < len(typed_word_str) { // continue here
-						text.Draw(screen, string(typed_word_str[i]), font_face, int((x + 25)), int((y+45)), color.RGBA{255, 0, 0, 255})
+						text.Draw(screen, string(typed_word_str[i]), font_face, int((x + 25)), int((y + 45)), color.RGBA{255, 0, 0, 255})
 					}
 				} else if currentRow.is_filled_in {
-					text.Draw(screen, string(currentRow.saved_word[i]), font_face, int((x + 25)), int((y+45)), color.RGBA{255, 0, 0, 255})
+					text.Draw(screen, string(currentRow.saved_word[i]), font_face, int((x + 25)), int((y + 45)), color.RGBA{255, 0, 0, 255})
 				}
 			}
 		}
