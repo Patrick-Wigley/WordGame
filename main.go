@@ -17,7 +17,7 @@ import (
 )
 
 const WORDS_LETTERS_COUNT = 5
-const CELL_SIZE = 100
+const CELL_SIZE = 70
 const TRIES = 6
 const WORD_TO_GUESS = "hello"
 
@@ -40,8 +40,8 @@ type Word struct {
 }
 
 var (
-	width          = 1300
-	height         = 800
+	width          = 700
+	height         = 850
 	word_to_guess  = ""
 	cells          = [TRIES]Word{}
 	attempt_index  = 0
@@ -97,11 +97,8 @@ func (g *Game) Update() error {
 			// User found word
 			word_found = true
 		} else {
-
-			//var characters_found_maxed = ""
 			var missingCharacters = WORD_TO_GUESS
 
-			println(attempt_index)
 			for i := 0; i < len(WORD_TO_GUESS); i++ {
 				var char = string(WORD_TO_GUESS[i])
 				var charInTypedWord = string(typed_word_str[i])
@@ -144,17 +141,17 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		for rowIndex := 0; rowIndex < len(cells); rowIndex++ {
 			var currentRow = &cells[rowIndex]
 			for i := 0; i < WORDS_LETTERS_COUNT; i++ {
-				var x float32 = float32(i)*125 + 250
-				var y float32 = float32(rowIndex) * (CELL_SIZE + 50)
+				var x float32 = (float32(width) / float32(WORDS_LETTERS_COUNT)) + (float32(i) * (float32(CELL_SIZE) + 20.0))
+				var y float32 = 100 + (float32(rowIndex) * (CELL_SIZE + 50))
 				var currentCell = cells[rowIndex].cells[i]
 
 				vector.DrawFilledRect(screen, x, y, CELL_SIZE, CELL_SIZE, currentCell.colour, false)
 				if attempt_index == rowIndex {
 					if i < len(typed_word_str) { // continue here
-						text.Draw(screen, string(typed_word_str[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
+						text.Draw(screen, string(typed_word_str[i]), font_face, int((x + 25)), int((y+45)), color.RGBA{255, 0, 0, 255})
 					}
 				} else if currentRow.is_filled_in {
-					text.Draw(screen, string(currentRow.saved_word[i]), font_face, int(x+(CELL_SIZE/2)), int(y+(CELL_SIZE/2)), color.RGBA{255, 0, 0, 255})
+					text.Draw(screen, string(currentRow.saved_word[i]), font_face, int((x + 25)), int((y+45)), color.RGBA{255, 0, 0, 255})
 				}
 			}
 		}
