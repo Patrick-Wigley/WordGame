@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"image/color"
 	"log"
 	"math/rand"
@@ -95,7 +94,7 @@ func init() {
 
 	var wordsCount = wordsDataFrame.Col("WORDS").Len()
 	var randomIndex = randomGenerator.Intn(wordsCount)
-	wordToGuess = fmt.Sprintf("%v", wordsDataFrame.Col("WORDS").Val(randomIndex))
+	wordToGuess = "rafts" //fmt.Sprintf("%v", wordsDataFrame.Col("WORDS").Val(randomIndex))
 	println(randomIndex, wordToGuess)
 
 	// Initialise cells
@@ -172,6 +171,7 @@ func (g *Game) Update() error {
 
 							var charactersFirstInstance = strings.Index(missingCharacters, char)
 							missingCharacters = missingCharacters[:charactersFirstInstance] + "|" + missingCharacters[charactersFirstInstance+1:]
+							println(missingCharacters)
 						}
 					}
 				}
