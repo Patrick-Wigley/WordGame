@@ -44,9 +44,10 @@ type Word struct {
 	saved_word   string
 }
 type KeyboardKeys struct {
-	colour   color.Color
-	key      string
-	keyFound bool
+	colour          color.Color
+	key             string
+	keyFoundInPlace bool
+	keyFound        bool
 }
 
 var (
@@ -151,7 +152,7 @@ func (g *Game) Update() error {
 
 						var KeyboardcharIndex = charIndexInArr(char, possibleChars)
 						possibleChars[KeyboardcharIndex].colour = color.RGBA{0, 255, 0, 255}
-						possibleChars[KeyboardcharIndex].keyFound = true
+						possibleChars[KeyboardcharIndex].keyFoundInPlace = true
 
 					}
 				}
@@ -160,18 +161,23 @@ func (g *Game) Update() error {
 					var charInTypedWord = string(typed_word_str[i])
 
 					if char != "|" {
+						var KeyboardcharIndex = charIndexInArr(charInTypedWord, possibleChars)
 						if strings.Contains(missingCharacters, charInTypedWord) {
 							// Player found letter NOT in correct place
 							cells[attempt_index].cells[i].colour = color.RGBA{255, 200, 100, 255}
 							// Continue here
-							var KeyboardcharIndex = charIndexInArr(charInTypedWord, possibleChars)
-							if !(possibleChars[KeyboardcharIndex].keyFound) {
+							if !(possibleChars[KeyboardcharIndex].keyFoundInPlace) {
 								possibleChars[KeyboardcharIndex].colour = color.RGBA{255, 200, 100, 255}
+								possibleChars[KeyboardcharIndex].keyFound = true
 							}
 
-							var charactersFirstInstance = strings.Index(missingCharacters, char)
+							var charactersFirstInstance = strings.Index(missingCharacters, charInTypedWord)
 							missingCharacters = missingCharacters[:charactersFirstInstance] + "|" + missingCharacters[charactersFirstInstance+1:]
 							println(missingCharacters)
+						} else {
+							if !(possibleChars[KeyboardcharIndex].keyFoundInPlace) && !(possibleChars[KeyboardcharIndex].keyFound) {
+								possibleChars[KeyboardcharIndex].colour = color.RGBA{150, 150, 150, 255}
+							}
 						}
 					}
 				}
